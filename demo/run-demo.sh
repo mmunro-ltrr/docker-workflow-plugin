@@ -34,7 +34,7 @@ echo '*************** Installing a local Docker Registry Service for the demo **
 echo '***************            Please sit tight for a minute                ***************'
 
 cont1=$(docker run -d --name registry --restart=always registry:0.9.1)
-tester=$(docker run -t -i --rm --link registry:registry debian:jessie cat /etc/hosts)
+tester=$(docker run --rm --link registry:registry debian:jessie cat /etc/hosts)
 cont2=$(docker run -d -p 443:443 --name wf-registry-proxy --link registry:registry nginx:docker-workflow-demo)
 # TODO would be natural to switch to Compose
 trap "docker rm -f $cont1 $cont2" EXIT
