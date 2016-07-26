@@ -33,11 +33,22 @@ sudo chmod a+rw /var/run/docker.sock
 echo '*************** Installing a local Docker Registry Service for the demo ***************'
 echo '***************            Please sit tight for a minute                ***************'
 
-cont1=$(docker run -d --name registry --restart=always registry:0.9.1)
-tester=$(docker run --name testate --link registry:registry debian:jessie /bin/cat /etc/hosts)
-cont2=$(docker run -d -p 443:443 --name wf-registry-proxy --link registry:registry nginx:docker-workflow-demo)
+bridgenetid=$(docker network create bridgenet)
+
+echo "Created the bridge network ${bridgenetid}."
+
+cont1=$(docker run -d --network bridgenet --name registry --restart=always registry:0.9.1)
+
+echo "Started the registry service as ${cont1}."
+
+cont2=$(docker run -d --network bridgenet -p 443:443 --name wf-registry-proxy --link registry:registry nginx:docker-workflow-demo)
+
+echo "Started the proxy service as ${cont2}."
+
 # TODO would be natural to switch to Compose
 trap "docker rm -f $cont1 $cont2" EXIT
+
+docker network inspect bridgenet
 
 # Note that this https://github.com/docker/docker/issues/23177 workaround is useless since the Docker CLI does not do the hostname resolution, the server does:
 # echo $(docker inspect -f '{{.NetworkSettings.Gateway}}' $HOSTNAME) docker.example.com >> /etc/hosts
